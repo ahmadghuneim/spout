@@ -18,6 +18,7 @@ use Box\Spout\Writer\Common\Manager\RowManager;
 use Box\Spout\Writer\Common\Manager\Style\StyleMerger;
 use Box\Spout\Writer\Common\Manager\WorksheetManagerInterface;
 use Box\Spout\Writer\XLSX\Manager\Style\StyleManager;
+use Illuminate\Support\Facades\File;
 
 /**
  * Class WorksheetManager
@@ -290,11 +291,17 @@ EOD;
     {
         $worksheetFilePointer = $worksheet->getFilePointer();
 
-        print_r($this->readFromDir);
-        die;
 
         if (!\is_resource($worksheetFilePointer)) {
             return;
+        }
+        if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
+            foreach (File::allFiles($this->readFromDir) as $item) {
+                $file = \fopen($item, 'r');
+                while (!feof($file)) {
+                    \fwrite($worksheetFilePointer, fgets($file));
+                }
+            }
         }
 
         \fwrite($worksheetFilePointer, '</sheetData>');
