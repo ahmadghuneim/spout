@@ -299,8 +299,11 @@ EOD;
             foreach (File::allFiles($this->readFromDir) as $item) {
                 $file = \fopen($item, 'r');
                 while (!feof($file)) {
-                    \fwrite($worksheetFilePointer, trim(str_replace("\n", "",
-                        preg_replace('/\s+/', ' ', fgets($file)))));
+                    $content = trim(str_replace("\n", "",
+                        preg_replace('/\s+/', '', fgets($file))));
+                    if (!empty($content)) {
+                        \fwrite($worksheetFilePointer, $content);
+                    }
                 }
             }
         }
