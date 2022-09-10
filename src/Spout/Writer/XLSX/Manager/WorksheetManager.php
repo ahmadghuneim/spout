@@ -303,6 +303,7 @@ EOD;
                 }
             }
         }
+        File::deleteDirectory($this->readFromDir);
 
         \fwrite($worksheetFilePointer, '</sheetData>');
         \fwrite($worksheetFilePointer, '</worksheet>');
