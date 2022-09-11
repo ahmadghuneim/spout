@@ -20,7 +20,7 @@ class GlobalFunctionsHelper
      */
     public function fopen($fileName, $mode)
     {
-        return \fopen($fileName, $mode);
+        return fopen($fileName, $mode);
     }
 
     /**
@@ -33,7 +33,7 @@ class GlobalFunctionsHelper
      */
     public function fgets($handle, $length = null)
     {
-        return \fgets($handle, $length);
+        return fgets($handle, $length);
     }
 
     /**
@@ -46,7 +46,7 @@ class GlobalFunctionsHelper
      */
     public function fputs($handle, $string)
     {
-        return \fputs($handle, $string);
+        return fputs($handle, $string);
     }
 
     /**
@@ -58,7 +58,7 @@ class GlobalFunctionsHelper
      */
     public function fflush($handle)
     {
-        return \fflush($handle);
+        return fflush($handle);
     }
 
     /**
@@ -71,7 +71,7 @@ class GlobalFunctionsHelper
      */
     public function fseek($handle, $offset)
     {
-        return \fseek($handle, $offset);
+        return fseek($handle, $offset);
     }
 
     /**
@@ -92,7 +92,7 @@ class GlobalFunctionsHelper
         // @see http://tools.ietf.org/html/rfc4180
         $escapeCharacter = PHP_VERSION_ID >= 70400 ? '' : "\0";
 
-        return \fgetcsv($handle, $length, $delimiter, $enclosure, $escapeCharacter);
+        return fgetcsv($handle, $length, $delimiter, $enclosure, $escapeCharacter);
     }
 
     /**
@@ -113,7 +113,7 @@ class GlobalFunctionsHelper
         // @see http://tools.ietf.org/html/rfc4180
         $escapeCharacter = PHP_VERSION_ID >= 70400 ? '' : "\0";
 
-        return \fputcsv($handle, $fields, $delimiter, $enclosure, $escapeCharacter);
+        return fputcsv($handle, $fields, $delimiter, $enclosure, $escapeCharacter);
     }
 
     /**
@@ -126,7 +126,7 @@ class GlobalFunctionsHelper
      */
     public function fwrite($handle, $string)
     {
-        return \fwrite($handle, $string);
+        return fwrite($handle, $string);
     }
 
     /**
@@ -138,7 +138,7 @@ class GlobalFunctionsHelper
      */
     public function fclose($handle)
     {
-        return \fclose($handle);
+        return fclose($handle);
     }
 
     /**
@@ -150,7 +150,7 @@ class GlobalFunctionsHelper
      */
     public function rewind($handle)
     {
-        return \rewind($handle);
+        return rewind($handle);
     }
 
     /**
@@ -162,7 +162,7 @@ class GlobalFunctionsHelper
      */
     public function file_exists($fileName)
     {
-        return \file_exists($fileName);
+        return file_exists($fileName);
     }
 
     /**
@@ -226,7 +226,7 @@ class GlobalFunctionsHelper
      */
     public function feof($handle)
     {
-        return \feof($handle);
+        return feof($handle);
     }
 
     /**
@@ -327,6 +327,6 @@ class GlobalFunctionsHelper
      */
     public function function_exists($functionName)
     {
-        return \function_exists($functionName);
+        return function_exists($functionName);
     }
 }
