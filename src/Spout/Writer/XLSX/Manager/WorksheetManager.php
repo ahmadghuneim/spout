@@ -146,11 +146,11 @@ EOD;
         $worksheetFilePointer = $worksheet->getFilePointer();
         if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
             foreach (File::allFiles($this->readFromDir) as $item) {
-                $file = \fopen($item, 'r');
-                while (!feof($file)) {
+//                $file = \fopen($item, 'r');
+//                while (!feof($file)) {
 
-                    \fwrite($worksheetFilePointer, fgets($file));
-                }
+                    \fwrite($worksheetFilePointer, file_get_contents($item));
+//                }
             }
         }
         File::deleteDirectory($this->readFromDir);
