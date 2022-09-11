@@ -144,16 +144,7 @@ EOD;
         $worksheet->setLastWrittenRowIndex($worksheet->getLastWrittenRowIndex() + 1);
 
         $worksheetFilePointer = $worksheet->getFilePointer();
-        if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
-            foreach (File::allFiles($this->readFromDir) as $item) {
-//                $file = \fopen($item, 'r');
-//                while (!feof($file)) {
 
-                    \fwrite($worksheetFilePointer, file_get_contents($item));
-//                }
-            }
-        }
-        File::deleteDirectory($this->readFromDir);
     }
 
     /**
@@ -314,6 +305,17 @@ EOD;
         if (!\is_resource($worksheetFilePointer)) {
             return;
         }
+
+        if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
+            foreach (File::allFiles($this->readFromDir) as $item) {
+                $file = \fopen($item, 'r');
+                while (!feof($file)) {
+                    \fwrite($worksheetFilePointer, fgets($file));
+                }
+            }
+        }
+        File::deleteDirectory($this->readFromDir);
+
         \fwrite($worksheetFilePointer, '</sheetData>');
         \fwrite($worksheetFilePointer, '</worksheet>');
         File::copy($worksheet->getFilePath(), storage_path('app/reports/1/file.xml'));
