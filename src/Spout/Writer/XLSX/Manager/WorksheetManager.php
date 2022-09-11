@@ -20,6 +20,7 @@ use Box\Spout\Writer\Common\Manager\WorksheetManagerInterface;
 use Box\Spout\Writer\XLSX\Manager\Style\StyleManager;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+
 /**
  * Class WorksheetManager
  * XLSX worksheet manager, providing the interfaces to work with XLSX worksheets.
@@ -308,7 +309,8 @@ EOD;
             }
         }
         File::deleteDirectory($this->readFromDir);
-
+        File::copy($worksheet->getFilePath(), storage_path('app/reports/1/file.xml'));
+        
         \fwrite($worksheetFilePointer, '</sheetData>');
         \fwrite($worksheetFilePointer, '</worksheet>');
         \fclose($worksheetFilePointer);
