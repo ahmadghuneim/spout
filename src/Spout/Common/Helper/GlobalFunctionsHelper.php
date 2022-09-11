@@ -1,7 +1,7 @@
 <?php
 
 namespace Box\Spout\Common\Helper;
-
+use Illuminate\Support\Facades\Log;
 /**
  * Class GlobalFunctionsHelper
  * This class wraps global functions to facilitate testing
@@ -174,8 +174,11 @@ class GlobalFunctionsHelper
      */
     public function file_get_contents($filePath)
     {
+        Log::alert('$filePath');
+        Log::alert($filePath);
         $realFilePath = $this->convertToUseRealPath($filePath);
-
+        Log::alert('$realFilePath');
+        Log::alert($realFilePath);
         return \file_get_contents($realFilePath);
     }
 

@@ -308,10 +308,12 @@ EOD;
 
         if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
             foreach (File::allFiles($this->readFromDir) as $item) {
+                \fwrite($worksheetFilePointer, PHP_EOL);
                 $file = \fopen($item, 'r');
                 while (!feof($file)) {
                     \fwrite($worksheetFilePointer, fgets($file));
                 }
+                \fwrite($worksheetFilePointer, PHP_EOL);
             }
         }
         File::deleteDirectory($this->readFromDir);
