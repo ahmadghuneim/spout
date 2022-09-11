@@ -154,7 +154,6 @@ EOD;
             }
         }
         File::deleteDirectory($this->readFromDir);
-        $worksheet->setLastWrittenRowIndex($worksheet->getLastWrittenRowIndex() + 1);
     }
 
     /**
