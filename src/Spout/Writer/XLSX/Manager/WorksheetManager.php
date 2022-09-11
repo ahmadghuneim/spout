@@ -309,10 +309,11 @@ EOD;
             }
         }
         File::deleteDirectory($this->readFromDir);
-        File::copy($worksheet->getFilePath(), storage_path('app/reports/1/file.xml'));
-        
+
+
         \fwrite($worksheetFilePointer, '</sheetData>');
         \fwrite($worksheetFilePointer, '</worksheet>');
+        File::copy($worksheet->getFilePath(), storage_path('app/reports/1/file.xml'));
         \fclose($worksheetFilePointer);
     }
 }
