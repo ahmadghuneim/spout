@@ -303,7 +303,7 @@ EOD;
                 $file = \fopen($item, 'r');
                 while (!feof($file)) {
 
-                    \fwrite($worksheetFilePointer, fgets($item));
+                    \fwrite($worksheetFilePointer, fgets($file));
                 }
             }
         }
@@ -311,7 +311,6 @@ EOD;
 
         \fwrite($worksheetFilePointer, '</sheetData>');
         \fwrite($worksheetFilePointer, '</worksheet>');
-        die;
         \fclose($worksheetFilePointer);
     }
 }
