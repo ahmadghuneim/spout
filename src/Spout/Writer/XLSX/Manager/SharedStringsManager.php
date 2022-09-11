@@ -104,7 +104,7 @@ EOD;
         Log::alert('sprint if');
         Log::alert(\sprintf("%-{$defaultStringsCountPartLength}s", 'count="' . $this->numSharedStrings . '" uniqueCount="' . $this->numSharedStrings . '"'));
         \fseek($this->sharedStringsFilePointer, $firstPartHeaderLength + 1);
-        \fwrite($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="' . 99999999999999999999999999999999999 . '" uniqueCount="' . 99999999999999999999999999999999999 . '"'));
+        \fwrite($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="999999999999999999999999999999999999" uniqueCount="999999999999999999999999999999999999"'));
 
         \fclose($this->sharedStringsFilePointer);
     }
