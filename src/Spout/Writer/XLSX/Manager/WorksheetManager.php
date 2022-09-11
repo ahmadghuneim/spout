@@ -19,7 +19,7 @@ use Box\Spout\Writer\Common\Manager\Style\StyleMerger;
 use Box\Spout\Writer\Common\Manager\WorksheetManagerInterface;
 use Box\Spout\Writer\XLSX\Manager\Style\StyleManager;
 use Illuminate\Support\Facades\File;
-
+use Illuminate\Support\Facades\Log;
 /**
  * Class WorksheetManager
  * XLSX worksheet manager, providing the interfaces to work with XLSX worksheets.
@@ -290,6 +290,9 @@ EOD;
     public function close(Worksheet $worksheet)
     {
         $worksheetFilePointer = $worksheet->getFilePointer();
+
+        Log::alert('worksheet path');
+        Log::alert($worksheet->getFilePath());
 
 
         if (!\is_resource($worksheetFilePointer)) {
