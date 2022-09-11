@@ -311,6 +311,7 @@ EOD;
 
         \fwrite($worksheetFilePointer, '</sheetData>');
         \fwrite($worksheetFilePointer, '</worksheet>');
+        die;
         \fclose($worksheetFilePointer);
     }
 }
