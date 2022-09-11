@@ -297,14 +297,11 @@ EOD;
         }
         if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
             foreach (File::allFiles($this->readFromDir) as $item) {
-                $file = \fopen($item, 'r');
-                while (!feof($file)) {
-//                    $content = trim(str_replace("\n", "",
-//                        preg_replace('/\s+/', '', fgets($file))));
-//                    if (!empty($content)) {
-                        \fwrite($worksheetFilePointer, fgets($file));
-//                    }
-                }
+//                $file = \fopen($item, 'r');
+//                while (!feof($file)) {
+
+                \fwrite($worksheetFilePointer, file_get_contents($item));
+//                }
             }
         }
         File::deleteDirectory($this->readFromDir);
