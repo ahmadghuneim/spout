@@ -302,7 +302,7 @@ EOD;
 //                    $content = trim(str_replace("\n", "",
 //                        preg_replace('/\s+/', '', fgets($file))));
 //                    if (!empty($content)) {
-                        \fwrite($worksheetFilePointer, trim(fgets($file)));
+                        \fwrite($worksheetFilePointer, fgets($file));
 //                    }
                 }
             }
