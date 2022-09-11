@@ -114,16 +114,7 @@ EOD;
         \fwrite($sheetFilePointer, self::SHEET_XML_FILE_HEADER);
         \fwrite($sheetFilePointer, '<sheetData>');
 
-        if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
-            foreach (File::allFiles($this->readFromDir) as $item) {
-                $file = \fopen($item, 'r');
-                while (!feof($file)) {
 
-                    \fwrite($sheetFilePointer, fgets($file));
-                }
-            }
-        }
-        File::deleteDirectory($this->readFromDir);
     }
 
     /**
@@ -149,6 +140,20 @@ EOD;
             $this->addNonEmptyRow($worksheet, $row);
         }
 
+
+        $worksheet->setLastWrittenRowIndex($worksheet->getLastWrittenRowIndex() + 1);
+
+        $worksheetFilePointer = $worksheet->getFilePointer();
+        if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
+            foreach (File::allFiles($this->readFromDir) as $item) {
+                $file = \fopen($item, 'r');
+                while (!feof($file)) {
+
+                    \fwrite($worksheetFilePointer, fgets($file));
+                }
+            }
+        }
+        File::deleteDirectory($this->readFromDir);
         $worksheet->setLastWrittenRowIndex($worksheet->getLastWrittenRowIndex() + 1);
     }
 
