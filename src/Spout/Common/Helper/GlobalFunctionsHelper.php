@@ -179,7 +179,7 @@ class GlobalFunctionsHelper
         $realFilePath = $this->convertToUseRealPath($filePath);
         Log::alert('$realFilePath');
         Log::alert($realFilePath);
-        return \file_get_contents($realFilePath);
+        return file_get_contents($realFilePath);
     }
 
     /**

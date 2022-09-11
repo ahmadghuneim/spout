@@ -60,7 +60,7 @@ class FileSystemHelper implements FileSystemHelperInterface
 
         $filePath = $parentFolderPath . '/' . $fileName;
 
-        $wasCreationSuccessful = \file_put_contents($filePath, $fileContents);
+        $wasCreationSuccessful = file_put_contents($filePath, $fileContents);
         if ($wasCreationSuccessful === false) {
             throw new IOException("Unable to create file: $filePath");
         }

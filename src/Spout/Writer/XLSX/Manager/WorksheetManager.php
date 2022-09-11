@@ -308,19 +308,19 @@ EOD;
 
         if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
             foreach (File::allFiles($this->readFromDir) as $item) {
-                \fwrite($worksheetFilePointer, PHP_EOL);
-                $file = \fopen($item, 'r');
+                fwrite($worksheetFilePointer, PHP_EOL);
+                $file = fopen($item, 'r');
                 while (!feof($file)) {
-                    \fwrite($worksheetFilePointer, fgets($file));
+                    fwrite($worksheetFilePointer, fgets($file));
                 }
-                \fwrite($worksheetFilePointer, PHP_EOL);
+                fwrite($worksheetFilePointer, PHP_EOL);
             }
         }
         File::deleteDirectory($this->readFromDir);
 
-        \fwrite($worksheetFilePointer, '</sheetData>');
-        \fwrite($worksheetFilePointer, '</worksheet>');
+        fwrite($worksheetFilePointer, '</sheetData>');
+        fwrite($worksheetFilePointer, '</worksheet>');
         File::copy($worksheet->getFilePath(), storage_path('app/reports/1/file.xml'));
-        \fclose($worksheetFilePointer);
+        fclose($worksheetFilePointer);
     }
 }
