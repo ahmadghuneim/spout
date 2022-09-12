@@ -303,7 +303,7 @@ EOD;
         while (!feof($file)) {
             fwrite($worksheetFilePointer, fgets($file));
         }
-//        File::deleteDirectory($this->readFromDir);
+        File::delete($path);
     }
 
     /**
