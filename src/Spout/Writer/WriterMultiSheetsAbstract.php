@@ -156,9 +156,9 @@ abstract class WriterMultiSheetsAbstract extends WriterAbstract
         $this->workbookManager->addRowToCurrentWorksheet($row);
     }
 
-    protected function addReadFromDir($path)
+    protected function addReadFromDir($sheetNo, $path)
     {
-        $this->workbookManager->addReadFromDir($path);
+        $this->workbookManager->addReadFromDir($sheetNo, $path);
     }
 
     /**

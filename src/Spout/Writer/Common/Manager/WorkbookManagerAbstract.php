@@ -61,15 +61,16 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
      * @param ManagerFactoryInterface $managerFactory
      */
     public function __construct(
-        Workbook $workbook,
-        OptionsManagerInterface $optionsManager,
-        WorksheetManagerInterface $worksheetManager,
-        StyleManagerInterface $styleManager,
-        StyleMerger $styleMerger,
+        Workbook                                $workbook,
+        OptionsManagerInterface                 $optionsManager,
+        WorksheetManagerInterface               $worksheetManager,
+        StyleManagerInterface                   $styleManager,
+        StyleMerger                             $styleMerger,
         FileSystemWithRootFolderHelperInterface $fileSystemHelper,
-        InternalEntityFactory $entityFactory,
-        ManagerFactoryInterface $managerFactory
-    ) {
+        InternalEntityFactory                   $entityFactory,
+        ManagerFactoryInterface                 $managerFactory
+    )
+    {
         $this->workbook = $workbook;
         $this->optionsManager = $optionsManager;
         $this->worksheetManager = $worksheetManager;
@@ -103,8 +104,8 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
      * Creates a new sheet in the workbook and make it the current sheet.
      * The writing will resume where it stopped (i.e. data won't be truncated).
      *
-     * @throws IOException If unable to open the sheet for writing
      * @return Worksheet The created sheet
+     * @throws IOException If unable to open the sheet for writing
      */
     public function addNewSheetAndMakeItCurrent()
     {
@@ -117,8 +118,8 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
     /**
      * Creates a new sheet in the workbook. The current sheet remains unchanged.
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to open the sheet for writing
      * @return Worksheet The created sheet
+     * @throws \Box\Spout\Common\Exception\IOException If unable to open the sheet for writing
      */
     private function addNewSheet()
     {
@@ -162,8 +163,8 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
      * The writing will resume where it stopped (i.e. data won't be truncated).
      *
      * @param Sheet $sheet The "external" sheet to set as current
-     * @throws SheetNotFoundException If the given sheet does not exist in the workbook
      * @return void
+     * @throws SheetNotFoundException If the given sheet does not exist in the workbook
      */
     public function setCurrentSheet(Sheet $sheet)
     {
@@ -210,9 +211,9 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
      * with the creation of new worksheets if one worksheet has reached its maximum capicity.
      *
      * @param Row $row The row to be added
-     * @throws IOException If trying to create a new sheet and unable to open the sheet for writing
-     * @throws WriterException If unable to write data
      * @return void
+     * @throws WriterException If unable to write data
+     * @throws IOException If trying to create a new sheet and unable to open the sheet for writing
      */
     public function addRowToCurrentWorksheet(Row $row)
     {
@@ -234,9 +235,14 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
         }
     }
 
-    public function addReadFromDir($path)
+    public function addReadFromDir($sheetNo, $path)
     {
-        $this->worksheetManager->addReadFromDir($path);
+        if ($sheetNo == 0) {
+            $currentWorksheet = $this->getCurrentWorksheet();
+        } else {
+            $currentWorksheet = $this->addNewSheetAndMakeItCurrent();
+        }
+        $this->worksheetManager->addReadFromDir($currentWorksheet, $path);
     }
 
     /**
@@ -254,8 +260,8 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
      *
      * @param Worksheet $worksheet Worksheet to write the row to
      * @param Row $row The row to be added
-     * @throws WriterException If unable to write data
      * @return void
+     * @throws WriterException If unable to write data
      */
     private function addRowToWorksheet(Worksheet $worksheet, Row $row)
     {
@@ -266,6 +272,19 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
         $currentMaxNumColumns = $worksheet->getMaxNumColumns();
         $cellsCount = $row->getNumCells();
         $worksheet->setMaxNumColumns(\max($currentMaxNumColumns, $cellsCount));
+    }
+
+    /**
+     * Adds a row to the given sheet.
+     *
+     * @param Worksheet $worksheet Worksheet to write the row to
+     * @param Row $row The row to be added
+     * @return void
+     * @throws WriterException If unable to write data
+     */
+    private function addReadPathToWorksheet(Worksheet $worksheet, Row $row)
+    {
+        $this->worksheetManager->addReadFromDir($worksheet, $row);
     }
 
     /**

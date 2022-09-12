@@ -41,13 +41,13 @@ EOD;
     public function __construct($xlFolder, $stringsEscaper)
     {
         $sharedStringsFilePath = $xlFolder . '/' . self::SHARED_STRINGS_FILE_NAME;
-        $this->sharedStringsFilePointer = \fopen($sharedStringsFilePath, 'w');
+        $this->sharedStringsFilePointer = fopen($sharedStringsFilePath, 'w');
 
         $this->throwIfSharedStringsFilePointerIsNotAvailable();
 
         // the headers is split into different parts so that we can fseek and put in the correct count and uniqueCount later
         $header = self::SHARED_STRINGS_XML_FILE_FIRST_PART_HEADER . ' ' . self::DEFAULT_STRINGS_COUNT_PART . '>';
-        \fwrite($this->sharedStringsFilePointer, $header);
+        fwrite($this->sharedStringsFilePointer, $header);
         Log::alert('header');
         Log::alert($header);
 
@@ -76,7 +76,7 @@ EOD;
      */
     public function writeString($string)
     {
-        \fwrite($this->sharedStringsFilePointer, '<si><t xml:space="preserve">' . $this->stringsEscaper->escape($string) . '</t></si>');
+        fwrite($this->sharedStringsFilePointer, '<si><t xml:space="preserve">' . $this->stringsEscaper->escape($string) . '</t></si>');
         $this->numSharedStrings++;
 
         // Shared string ID is zero-based
@@ -94,7 +94,7 @@ EOD;
             return;
         }
 
-        \fwrite($this->sharedStringsFilePointer, '</sst>');
+        fwrite($this->sharedStringsFilePointer, '</sst>');
 
         // Replace the default strings count with the actual number of shared strings in the file header
         $firstPartHeaderLength = \strlen(self::SHARED_STRINGS_XML_FILE_FIRST_PART_HEADER);
@@ -103,9 +103,9 @@ EOD;
         // Adding 1 to take into account the space between the last xml attribute and "count"
         Log::alert('sprint if');
         Log::alert(\sprintf("%-{$defaultStringsCountPartLength}s", 'count="' . $this->numSharedStrings . '" uniqueCount="' . $this->numSharedStrings . '"'));
-        \fseek($this->sharedStringsFilePointer, $firstPartHeaderLength + 1);
-        \fwrite($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="999999999999999999999999999999999999" uniqueCount="999999999999999999999999999999999999"'));
+        fseek($this->sharedStringsFilePointer, $firstPartHeaderLength + 1);
+        fwrite($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="99999999999999999999999999999999999" uniqueCount="99999999999999999999999999999999999"'));
 
-        \fclose($this->sharedStringsFilePointer);
+        fclose($this->sharedStringsFilePointer);
     }
 }

@@ -65,7 +65,7 @@ interface WorkbookManagerInterface
     public function addRowToCurrentWorksheet(Row $row);
 
 
-    public function addReadFromDir($path);
+    public function addReadFromDir($sheetNo, $path);
 
     /**
      * Closes the workbook and all its associated sheets.

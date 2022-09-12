@@ -31,9 +31,9 @@ class Writer extends WriterMultiSheetsAbstract
         return $this;
     }
 
-    public function setReadFromFiles($path)
+    public function setReadFromFiles($sheetNo,$path)
     {
-        $this->addReadFromDir($path);
+        $this->addReadFromDir($sheetNo,$path);
     }
 
     /**

@@ -106,13 +106,13 @@ EOD;
      */
     public function startSheet(Worksheet $worksheet)
     {
-        $sheetFilePointer = \fopen($worksheet->getFilePath(), 'w');
+        $sheetFilePointer = fopen($worksheet->getFilePath(), 'w');
         $this->throwIfSheetFilePointerIsNotAvailable($sheetFilePointer);
 
         $worksheet->setFilePointer($sheetFilePointer);
 
-        \fwrite($sheetFilePointer, self::SHEET_XML_FILE_HEADER);
-        \fwrite($sheetFilePointer, '<sheetData>');
+        fwrite($sheetFilePointer, self::SHEET_XML_FILE_HEADER);
+        fwrite($sheetFilePointer, '<sheetData>');
 
 
     }
@@ -175,7 +175,7 @@ EOD;
 
         $rowXML .= '</row>';
 
-        $wasWriteSuccessful = \fwrite($worksheet->getFilePointer(), $rowXML);
+        $wasWriteSuccessful = fwrite($worksheet->getFilePointer(), $rowXML);
         if ($wasWriteSuccessful === false) {
             throw new IOException("Unable to write data in {$worksheet->getFilePath()}");
         }
@@ -286,9 +286,24 @@ EOD;
         return $cellXMLFragment;
     }
 
-    public function addReadFromDir($path)
+    /*public function addReadFromDir($path)
     {
         $this->readFromDir = $path;
+    }*/
+    public function addReadFromDir(Worksheet $worksheet, $path)
+    {
+        echo $worksheet->getFilePath();
+        $worksheetFilePointer = $worksheet->getFilePointer();
+
+        if (!\is_resource($worksheetFilePointer)) {
+            return;
+        }
+
+        $file = fopen($path, 'r');
+        while (!feof($file)) {
+            fwrite($worksheetFilePointer, fgets($file));
+        }
+//        File::deleteDirectory($this->readFromDir);
     }
 
     /**
@@ -306,21 +321,19 @@ EOD;
             return;
         }
 
-        if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
-            foreach (File::allFiles($this->readFromDir) as $item) {
-                fwrite($worksheetFilePointer, PHP_EOL);
-                $file = fopen($item, 'r');
-                while (!feof($file)) {
-                    fwrite($worksheetFilePointer, fgets($file));
-                }
-                fwrite($worksheetFilePointer, PHP_EOL);
-            }
-        }
-        File::deleteDirectory($this->readFromDir);
+        /* if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
+             foreach (File::allFiles($this->readFromDir) as $index => $item) {
+
+                 $file = fopen($item, 'r');
+                 while (!feof($file)) {
+                     fwrite($worksheetFilePointer, fgets($file));
+                 }
+             }
+         }*/
+//        File::deleteDirectory($this->readFromDir);
 
         fwrite($worksheetFilePointer, '</sheetData>');
         fwrite($worksheetFilePointer, '</worksheet>');
-        File::copy($worksheet->getFilePath(), storage_path('app/reports/1/file.xml'));
         fclose($worksheetFilePointer);
     }
 }

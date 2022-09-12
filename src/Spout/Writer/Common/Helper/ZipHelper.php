@@ -210,7 +210,7 @@ class ZipHelper
      */
     protected function copyZipToStream($zipFilePath, $pointer)
     {
-        $zipFilePointer = \fopen($zipFilePath, 'r');
+        $zipFilePointer = fopen($zipFilePath, 'r');
         \stream_copy_to_stream($zipFilePointer, $pointer);
         \fclose($zipFilePointer);
     }

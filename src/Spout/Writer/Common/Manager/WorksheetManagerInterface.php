@@ -39,5 +39,5 @@ interface WorksheetManagerInterface
      */
     public function close(Worksheet $worksheet);
 
-    public function addReadFromDir($path);
+    public function addReadFromDir(Worksheet $worksheet, $path);
 }

@@ -62,7 +62,7 @@ class WorksheetManager implements WorksheetManagerInterface
      */
     public function startSheet(Worksheet $worksheet)
     {
-        $sheetFilePointer = \fopen($worksheet->getFilePath(), 'w');
+        $sheetFilePointer = fopen($worksheet->getFilePath(), 'w');
         $this->throwIfSheetFilePointerIsNotAvailable($sheetFilePointer);
 
         $worksheet->setFilePointer($sheetFilePointer);
@@ -141,7 +141,7 @@ class WorksheetManager implements WorksheetManagerInterface
 
         $data .= '</table:table-row>';
 
-        $wasWriteSuccessful = \fwrite($worksheet->getFilePointer(), $data);
+        $wasWriteSuccessful = fwrite($worksheet->getFilePointer(), $data);
         if ($wasWriteSuccessful === false) {
             throw new IOException("Unable to write data in {$worksheet->getFilePath()}");
         }
