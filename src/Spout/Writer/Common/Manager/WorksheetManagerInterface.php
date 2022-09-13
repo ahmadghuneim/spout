@@ -40,4 +40,6 @@ interface WorksheetManagerInterface
     public function close(Worksheet $worksheet);
 
     public function addReadFromDir(Worksheet $worksheet, $path);
+    
+    public function addCustomRow(Worksheet $worksheet, $path);
 }

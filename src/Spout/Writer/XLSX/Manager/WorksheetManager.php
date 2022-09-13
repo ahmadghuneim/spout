@@ -306,6 +306,12 @@ EOD;
         File::delete($path);
     }
 
+    public function addCustomRow(Worksheet $worksheet, $row)
+    {
+        $worksheetFilePointer = $worksheet->getFilePointer();
+        fwrite($worksheetFilePointer, $row);
+    }
+
     /**
      * {@inheritdoc}
      */

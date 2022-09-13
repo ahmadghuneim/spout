@@ -35,6 +35,11 @@ class Writer extends WriterMultiSheetsAbstract
     {
         $this->addReadFromDir($sheetNo,$path);
     }
+    
+    public function setCustomRow($addNewSheet,$row)
+    {
+        $this->addCustomRow($addNewSheet,$row);
+    }
 
     /**
      * Use inline string to be more memory efficient. If set to false, it will use shared strings.

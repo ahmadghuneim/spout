@@ -245,6 +245,16 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
         $this->worksheetManager->addReadFromDir($currentWorksheet, $path);
     }
 
+    public function addCustomRow($addNewSheet, $row)
+    {
+        if (!$addNewSheet) {
+            $currentWorksheet = $this->getCurrentWorksheet();
+        } else {
+            $currentWorksheet = $this->addNewSheetAndMakeItCurrent();
+        }
+        $this->worksheetManager->addCustomRow($currentWorksheet, $row);
+    }
+
     /**
      * @return bool Whether the current worksheet has reached the maximum number of rows per sheet.
      */

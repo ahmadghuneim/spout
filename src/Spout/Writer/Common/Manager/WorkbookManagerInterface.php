@@ -67,6 +67,9 @@ interface WorkbookManagerInterface
 
     public function addReadFromDir($sheetNo, $path);
 
+    public function addCustomRow($addNewSheet, $row);
+
+
     /**
      * Closes the workbook and all its associated sheets.
      * All the necessary files are written to disk and zipped together to create the final file.

@@ -161,6 +161,11 @@ abstract class WriterMultiSheetsAbstract extends WriterAbstract
         $this->workbookManager->addReadFromDir($sheetNo, $path);
     }
 
+    protected function addCustomRow($addNewSheet, $row)
+    {
+        $this->workbookManager->addCustomRow($addNewSheet, $row);
+    }
+
     /**
      * {@inheritdoc}
      */
