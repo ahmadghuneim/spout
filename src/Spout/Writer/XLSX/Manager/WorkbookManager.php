@@ -17,7 +17,7 @@ class WorkbookManager extends WorkbookManagerAbstract
      * Maximum number of rows a XLSX sheet can contain
      * @see http://office.microsoft.com/en-us/excel-help/excel-specifications-and-limits-HP010073849.aspx
      */
-    protected static $maxRowsPerWorksheet = 2;
+    protected static $maxRowsPerWorksheet = 1048576;
 
     /** @var WorksheetManager Object used to manage worksheets */
     protected $worksheetManager;
