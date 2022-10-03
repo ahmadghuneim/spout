@@ -43,7 +43,8 @@ EOD;
     {
         $sharedStringsFilePath = $xlFolder . '/' . self::SHARED_STRINGS_FILE_NAME;
 
-        Log::alert('shared file $sharedStringsFilePath : ' . $sharedStringsFilePath);
+        Log::alert('shared file $xlFolder : ' . $xlFolder);
+        Log::alert('shared self::SHARED_STRINGS_FILE_NAME$xlFolder : ' . self::SHARED_STRINGS_FILE_NAME);
 
         $this->sharedStringsFilePointer = fopen($sharedStringsFilePath, 'w');
 
