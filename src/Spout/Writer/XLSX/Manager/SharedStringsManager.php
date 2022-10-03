@@ -5,6 +5,7 @@ namespace Box\Spout\Writer\XLSX\Manager;
 use Box\Spout\Common\Exception\IOException;
 use Box\Spout\Common\Helper\Escaper;
 use Illuminate\Support\Facades\Log;
+
 /**
  * Class SharedStringsManager
  * This class provides functions to write shared strings
@@ -41,6 +42,9 @@ EOD;
     public function __construct($xlFolder, $stringsEscaper)
     {
         $sharedStringsFilePath = $xlFolder . '/' . self::SHARED_STRINGS_FILE_NAME;
+
+        Log::alert('shared file $sharedStringsFilePath : ' . $sharedStringsFilePath);
+
         $this->sharedStringsFilePointer = fopen($sharedStringsFilePath, 'w');
 
         $this->throwIfSharedStringsFilePointerIsNotAvailable();
@@ -57,8 +61,8 @@ EOD;
     /**
      * Checks if the book has been created. Throws an exception if not created yet.
      *
-     * @throws \Box\Spout\Common\Exception\IOException If the sheet data file cannot be opened for writing
      * @return void
+     * @throws \Box\Spout\Common\Exception\IOException If the sheet data file cannot be opened for writing
      */
     protected function throwIfSharedStringsFilePointerIsNotAvailable()
     {
