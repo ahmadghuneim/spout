@@ -5,7 +5,7 @@ namespace Box\Spout\Writer\XLSX\Manager;
 use Box\Spout\Common\Exception\IOException;
 use Box\Spout\Common\Helper\Escaper;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Storage;
 /**
  * Class SharedStringsManager
  * This class provides functions to write shared strings
