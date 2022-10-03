@@ -43,13 +43,15 @@ EOD;
     {
         $sharedStringsFilePath = $xlFolder . '/' . self::SHARED_STRINGS_FILE_NAME;
 
-        $this->sharedStringsFilePointer = fopen($sharedStringsFilePath, 'w');
+        $this->sharedStringsFilePointer = $sharedStringsFilePath;
+//        $this->sharedStringsFilePointer = fopen($sharedStringsFilePath, 'w');
 
-        $this->throwIfSharedStringsFilePointerIsNotAvailable();
+//        $this->throwIfSharedStringsFilePointerIsNotAvailable();
 
         // the headers is split into different parts so that we can fseek and put in the correct count and uniqueCount later
         $header = self::SHARED_STRINGS_XML_FILE_FIRST_PART_HEADER . ' ' . self::DEFAULT_STRINGS_COUNT_PART . '>';
-        fwrite($this->sharedStringsFilePointer, $header);
+        Storage::disk('s3Xlsx')->append($this->sharedStringsFilePointer, $header);
+//        fwrite($this->sharedStringsFilePointer, $header);
         Log::alert('header');
         Log::alert($header);
 
@@ -78,7 +80,8 @@ EOD;
      */
     public function writeString($string)
     {
-        fwrite($this->sharedStringsFilePointer, '<si><t xml:space="preserve">' . $this->stringsEscaper->escape($string) . '</t></si>');
+        Storage::disk('s3Xlsx')->append($this->sharedStringsFilePointer, '<si><t xml:space="preserve">' . $this->stringsEscaper->escape($string) . '</t></si>');
+//        fwrite($this->sharedStringsFilePointer, '<si><t xml:space="preserve">' . $this->stringsEscaper->escape($string) . '</t></si>');
         $this->numSharedStrings++;
 
         // Shared string ID is zero-based
@@ -92,12 +95,12 @@ EOD;
      */
     public function close()
     {
-        if (!\is_resource($this->sharedStringsFilePointer)) {
+       /* if (!\is_resource($this->sharedStringsFilePointer)) {
             return;
-        }
+        }*/
 
-        fwrite($this->sharedStringsFilePointer, '</sst>');
-
+//        fwrite($this->sharedStringsFilePointer, '</sst>');
+        Storage::disk('s3Xlsx')->append($this->sharedStringsFilePointer, '</sst>');
         // Replace the default strings count with the actual number of shared strings in the file header
         $firstPartHeaderLength = \strlen(self::SHARED_STRINGS_XML_FILE_FIRST_PART_HEADER);
         $defaultStringsCountPartLength = \strlen(self::DEFAULT_STRINGS_COUNT_PART);
@@ -105,9 +108,10 @@ EOD;
         // Adding 1 to take into account the space between the last xml attribute and "count"
         Log::alert('sprint if');
         Log::alert(\sprintf("%-{$defaultStringsCountPartLength}s", 'count="' . $this->numSharedStrings . '" uniqueCount="' . $this->numSharedStrings . '"'));
-        fseek($this->sharedStringsFilePointer, $firstPartHeaderLength + 1);
-        fwrite($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="99999999999999999999999999999999999" uniqueCount="99999999999999999999999999999999999"'));
+//        fseek($this->sharedStringsFilePointer, $firstPartHeaderLength + 1);
+        Storage::disk('s3Xlsx')->append($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="99999999999999999999999999999999999" uniqueCount="99999999999999999999999999999999999"'));
+//        fwrite($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="99999999999999999999999999999999999" uniqueCount="99999999999999999999999999999999999"'));
 
-        fclose($this->sharedStringsFilePointer);
+//        fclose($this->sharedStringsFilePointer);
     }
 }

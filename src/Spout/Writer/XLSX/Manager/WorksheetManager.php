@@ -20,6 +20,7 @@ use Box\Spout\Writer\Common\Manager\WorksheetManagerInterface;
 use Box\Spout\Writer\XLSX\Manager\Style\StyleManager;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class WorksheetManager
@@ -106,13 +107,16 @@ EOD;
      */
     public function startSheet(Worksheet $worksheet)
     {
-        $sheetFilePointer = fopen($worksheet->getFilePath(), 'w');
+//        $sheetFilePointer = fopen($worksheet->getFilePath(), 'w');
+        $sheetFilePointer = $worksheet->getFilePath();
         $this->throwIfSheetFilePointerIsNotAvailable($sheetFilePointer);
 
         $worksheet->setFilePointer($sheetFilePointer);
 
-        fwrite($sheetFilePointer, self::SHEET_XML_FILE_HEADER);
-        fwrite($sheetFilePointer, '<sheetData>');
+        Storage::disk('s3Xlsx')->append($sheetFilePointer,self::SHEET_XML_FILE_HEADER);
+        Storage::disk('s3Xlsx')->append($sheetFilePointer,'<sheetData>');
+//        fwrite($sheetFilePointer, self::SHEET_XML_FILE_HEADER);
+//        fwrite($sheetFilePointer, '<sheetData>');
 
 
     }
@@ -175,10 +179,12 @@ EOD;
 
         $rowXML .= '</row>';
 
-        $wasWriteSuccessful = fwrite($worksheet->getFilePointer(), $rowXML);
+
+        Storage::disk('s3Xlsx')->append($worksheet->getFilePointer(),$rowXML);
+        /*$wasWriteSuccessful = fwrite($worksheet->getFilePointer(), $rowXML);
         if ($wasWriteSuccessful === false) {
             throw new IOException("Unable to write data in {$worksheet->getFilePath()}");
-        }
+        }*/
     }
 
     /**
@@ -301,7 +307,8 @@ EOD;
 
         $file = fopen($path, 'r');
         while (!feof($file)) {
-            fwrite($worksheetFilePointer, fgets($file));
+            Storage::disk('s3Xlsx')->append($worksheetFilePointer,fgets($file));
+//            fwrite($worksheetFilePointer, fgets($file));
         }
         File::delete($path);
     }
@@ -309,7 +316,8 @@ EOD;
     public function addCustomRow(Worksheet $worksheet, $row)
     {
         $worksheetFilePointer = $worksheet->getFilePointer();
-        fwrite($worksheetFilePointer, $row);
+        Storage::disk('s3Xlsx')->append($worksheetFilePointer,$row);
+//        fwrite($worksheetFilePointer, $row);
     }
 
     /**
@@ -323,9 +331,9 @@ EOD;
         Log::alert($worksheet->getFilePath());
 
 
-        if (!\is_resource($worksheetFilePointer)) {
+       /* if (!\is_resource($worksheetFilePointer)) {
             return;
-        }
+        }*/
 
         /* if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
              foreach (File::allFiles($this->readFromDir) as $index => $item) {
@@ -337,9 +345,10 @@ EOD;
              }
          }*/
 //        File::deleteDirectory($this->readFromDir);
-
-        fwrite($worksheetFilePointer, '</sheetData>');
-        fwrite($worksheetFilePointer, '</worksheet>');
-        fclose($worksheetFilePointer);
+        Storage::disk('s3Xlsx')->append($worksheetFilePointer,'</sheetData>');
+        Storage::disk('s3Xlsx')->append($worksheetFilePointer,'</worksheet>');
+//        fwrite($worksheetFilePointer, '</sheetData>');
+//        fwrite($worksheetFilePointer, '</worksheet>');
+//        fclose($worksheetFilePointer);
     }
 }
