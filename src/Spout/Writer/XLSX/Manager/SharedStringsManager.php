@@ -6,6 +6,7 @@ use Box\Spout\Common\Exception\IOException;
 use Box\Spout\Common\Helper\Escaper;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+
 /**
  * Class SharedStringsManager
  * This class provides functions to write shared strings
@@ -95,9 +96,9 @@ EOD;
      */
     public function close()
     {
-       /* if (!\is_resource($this->sharedStringsFilePointer)) {
-            return;
-        }*/
+        /* if (!\is_resource($this->sharedStringsFilePointer)) {
+             return;
+         }*/
 
 //        fwrite($this->sharedStringsFilePointer, '</sst>');
         Storage::disk('s3Xlsx')->append($this->sharedStringsFilePointer, '</sst>');
@@ -111,7 +112,7 @@ EOD;
 //        fseek($this->sharedStringsFilePointer, $firstPartHeaderLength + 1);
         Storage::disk('s3Xlsx')->append($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="99999999999999999999999999999999999" uniqueCount="99999999999999999999999999999999999"'));
 //        fwrite($this->sharedStringsFilePointer, \sprintf("%-{$defaultStringsCountPartLength}s", 'count="99999999999999999999999999999999999" uniqueCount="99999999999999999999999999999999999"'));
-
+        $this->sharedStringsFilePointer = '';
 //        fclose($this->sharedStringsFilePointer);
     }
 }
