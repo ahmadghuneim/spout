@@ -286,11 +286,12 @@ EOD;
         return $cellXMLFragment;
     }
 
-    /*public function addReadFromDir($path)
+    public function addReadFromDir(Worksheet $worksheet, $path)
     {
         $this->readFromDir = $path;
-    }*/
-    public function addReadFromDir(Worksheet $worksheet, $path)
+        $this->close($worksheet);
+    }
+   /* public function addReadFromDir(Worksheet $worksheet, $path)
     {
         echo $worksheet->getFilePath();
         $worksheetFilePointer = $worksheet->getFilePointer();
@@ -304,7 +305,7 @@ EOD;
             fwrite($worksheetFilePointer, fgets($file));
         }
         File::delete($path);
-    }
+    }*/
 
     public function addCustomRow(Worksheet $worksheet, $row)
     {
@@ -341,5 +342,14 @@ EOD;
         fwrite($worksheetFilePointer, '</sheetData>');
         fwrite($worksheetFilePointer, '</worksheet>');
         fclose($worksheetFilePointer);
+
+
+        if (!empty($this->readFromDir)) {
+            echo $this->readFromDir->getRealPath();
+
+            File::move(
+                $this->readFromDir->getRealPath()
+                , pathinfo($worksheet->getFilePath())['dirname'] . '/' . $this->readFromDir->getBasename());
+        }
     }
 }
