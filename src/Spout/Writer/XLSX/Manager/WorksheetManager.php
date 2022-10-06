@@ -320,6 +320,7 @@ EOD;
     {
         $worksheetFilePointer = $worksheet->getFilePointer();
 
+        $workSheetPath = pathinfo($worksheet->getFilePath())['dirname'];
         Log::alert('worksheet path');
         Log::alert($worksheet->getFilePath());
 
@@ -343,13 +344,14 @@ EOD;
         fwrite($worksheetFilePointer, '</worksheet>');
         fclose($worksheetFilePointer);
 
+        File::delete($worksheet->getFilePath());
 
         if (!empty($this->readFromDir)) {
             echo $this->readFromDir->getRealPath();
 
             File::move(
                 $this->readFromDir->getRealPath()
-                , pathinfo($worksheet->getFilePath())['dirname'] . '/' . $this->readFromDir->getBasename());
+                , $workSheetPath . '/' . $this->readFromDir->getBasename());
         }
     }
 }
