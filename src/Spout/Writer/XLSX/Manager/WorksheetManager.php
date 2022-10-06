@@ -344,10 +344,8 @@ EOD;
         fwrite($worksheetFilePointer, '</worksheet>');
         fclose($worksheetFilePointer);
 
-        File::delete($worksheet->getFilePath());
-
         if (!empty($this->readFromDir)) {
-            echo $this->readFromDir->getRealPath();
+            File::delete($worksheet->getFilePath());
 
             File::move(
                 $this->readFromDir->getRealPath()
