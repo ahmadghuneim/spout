@@ -3,6 +3,7 @@
 namespace Box\Spout\Common\Helper;
 
 use Box\Spout\Common\Exception\IOException;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class FileSystemHelper
@@ -27,8 +28,8 @@ class FileSystemHelper implements FileSystemHelperInterface
      *
      * @param string $parentFolderPath The parent folder path under which the folder is going to be created
      * @param string $folderName The name of the folder to create
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder or if the folder path is not inside of the base folder
      * @return string Path of the created folder
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder or if the folder path is not inside of the base folder
      */
     public function createFolder($parentFolderPath, $folderName)
     {
@@ -44,6 +45,18 @@ class FileSystemHelper implements FileSystemHelperInterface
         return $folderPath;
     }
 
+    public function createCloudFolder($parentFolderPath, $folderName, $disk)
+    {
+        $folderPath = $parentFolderPath . '/' . $folderName;
+
+        /*$wasCreationSuccessful = Storage::disk($disk)->put($folderPath, '');
+        if (!$wasCreationSuccessful) {
+            throw new IOException("Unable to create folder: $folderPath");
+        }*/
+
+        return $folderPath;
+    }
+
     /**
      * Creates a file with the given name and content in the given folder.
      * The parent folder must exist.
@@ -51,8 +64,8 @@ class FileSystemHelper implements FileSystemHelperInterface
      * @param string $parentFolderPath The parent folder path where the file is going to be created
      * @param string $fileName The name of the file to create
      * @param string $fileContents The contents of the file to create
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the file or if the file path is not inside of the base folder
      * @return string Path of the created file
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the file or if the file path is not inside of the base folder
      */
     public function createFileWithContents($parentFolderPath, $fileName, $fileContents)
     {
@@ -68,12 +81,25 @@ class FileSystemHelper implements FileSystemHelperInterface
         return $filePath;
     }
 
+    public function createCloudFileWithContents($parentFolderPath, $fileName, $fileContents, $disk)
+    {
+
+        $filePath = $parentFolderPath . '/' . $fileName;
+
+        $wasCreationSuccessful = Storage::disk($disk)->put($filePath, $fileContents);
+        if ($wasCreationSuccessful === false) {
+            throw new IOException("Unable to create file: $filePath");
+        }
+
+        return $filePath;
+    }
+
     /**
      * Delete the file at the given path
      *
      * @param string $filePath Path of the file to delete
-     * @throws \Box\Spout\Common\Exception\IOException If the file path is not inside of the base folder
      * @return void
+     * @throws \Box\Spout\Common\Exception\IOException If the file path is not inside of the base folder
      */
     public function deleteFile($filePath)
     {
@@ -88,8 +114,8 @@ class FileSystemHelper implements FileSystemHelperInterface
      * Delete the folder at the given path as well as all its contents
      *
      * @param string $folderPath Path of the folder to delete
-     * @throws \Box\Spout\Common\Exception\IOException If the folder path is not inside of the base folder
      * @return void
+     * @throws \Box\Spout\Common\Exception\IOException If the folder path is not inside of the base folder
      */
     public function deleteFolderRecursively($folderPath)
     {
@@ -117,9 +143,9 @@ class FileSystemHelper implements FileSystemHelperInterface
      * should occur is not inside the base folder.
      *
      * @param string $operationFolderPath The path of the folder where the I/O operation should occur
+     * @return void
      * @throws \Box\Spout\Common\Exception\IOException If the folder where the I/O operation should occur
      * is not inside the base folder or the base folder does not exist
-     * @return void
      */
     protected function throwIfOperationNotInBaseFolder(string $operationFolderPath)
     {

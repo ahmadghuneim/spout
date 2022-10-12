@@ -17,6 +17,8 @@ interface ManagerFactoryInterface
      */
     public function createWorkbookManager(OptionsManagerInterface $optionsManager);
 
+    public function createCloudWorkbookManager(OptionsManagerInterface $optionsManager, $disk);
+
     /**
      * @return SheetManager
      */

@@ -4,6 +4,7 @@ namespace Box\Spout\Writer;
 
 use Box\Spout\Common\Creator\HelperFactory;
 use Box\Spout\Common\Entity\Row;
+use Box\Spout\Common\Helper\GlobalCloudHelper;
 use Box\Spout\Common\Helper\GlobalFunctionsHelper;
 use Box\Spout\Common\Manager\OptionsManagerInterface;
 use Box\Spout\Writer\Common\Creator\ManagerFactoryInterface;
@@ -37,10 +38,11 @@ abstract class WriterMultiSheetsAbstract extends WriterAbstract
         OptionsManagerInterface $optionsManager,
         GlobalFunctionsHelper   $globalFunctionsHelper,
         HelperFactory           $helperFactory,
-        ManagerFactoryInterface $managerFactory
+        ManagerFactoryInterface $managerFactory,
+        GlobalCloudHelper       $globalCloudFunctionsHelper
     )
     {
-        parent::__construct($optionsManager, $globalFunctionsHelper, $helperFactory);
+        parent::__construct($optionsManager, $globalFunctionsHelper, $helperFactory, $globalCloudFunctionsHelper);
         $this->managerFactory = $managerFactory;
     }
 
@@ -68,6 +70,18 @@ abstract class WriterMultiSheetsAbstract extends WriterAbstract
     {
         if ($this->workbookManager === null) {
             $this->workbookManager = $this->managerFactory->createWorkbookManager($this->optionsManager);
+            $this->workbookManager->addNewSheetAndMakeItCurrent();
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function openCloudWriter($disk)
+    {
+
+        if ($this->workbookManager === null) {
+            $this->workbookManager = $this->managerFactory->createCloudWorkbookManager($this->optionsManager, $disk);
             $this->workbookManager->addNewSheetAndMakeItCurrent();
         }
     }
@@ -169,10 +183,11 @@ abstract class WriterMultiSheetsAbstract extends WriterAbstract
     /**
      * {@inheritdoc}
      */
-    protected function closeWriter()
+    protected function closeWriter($zippedFile = '')
     {
+
         if ($this->workbookManager !== null) {
-            $this->workbookManager->close($this->filePointer);
+            $this->workbookManager->close($this->filePointer, $zippedFile);
         }
     }
 }

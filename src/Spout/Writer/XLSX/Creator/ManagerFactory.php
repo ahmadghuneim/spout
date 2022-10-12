@@ -9,10 +9,12 @@ use Box\Spout\Writer\Common\Entity\Options;
 use Box\Spout\Writer\Common\Manager\RowManager;
 use Box\Spout\Writer\Common\Manager\SheetManager;
 use Box\Spout\Writer\Common\Manager\Style\StyleMerger;
+use Box\Spout\Writer\XLSX\Manager\SharedStringsCloudManager;
 use Box\Spout\Writer\XLSX\Manager\SharedStringsManager;
 use Box\Spout\Writer\XLSX\Manager\Style\StyleManager;
 use Box\Spout\Writer\XLSX\Manager\Style\StyleRegistry;
 use Box\Spout\Writer\XLSX\Manager\WorkbookManager;
+use Box\Spout\Writer\XLSX\Manager\WorksheetCloudManager;
 use Box\Spout\Writer\XLSX\Manager\WorksheetManager;
 
 /**
@@ -67,6 +69,37 @@ class ManagerFactory implements ManagerFactoryInterface
         );
     }
 
+    public function createCloudWorkbookManager(OptionsManagerInterface $optionsManager, $disk)
+    {
+
+        $workbook = $this->entityFactory->createWorkbook();
+
+        $fileSystemHelper = $this->helperFactory->createSpecificFileSystemHelper($optionsManager, $this->entityFactory);
+        $fileSystemHelper->createCloudBaseFilesAndFolders($disk);
+
+
+        $xlFolder = $fileSystemHelper->getXlFolder();
+        $sharedStringsManager = $this->createCloudSharedStringsManager($xlFolder, $disk);
+
+
+        $styleMerger = $this->createStyleMerger();
+        $styleManager = $this->createStyleManager($optionsManager);
+
+        $worksheetManager = $this->createCloudWorksheetManager($optionsManager, $styleManager, $styleMerger, $sharedStringsManager, $disk);
+
+        return new WorkbookManager(
+            $workbook,
+            $optionsManager,
+            $worksheetManager,
+            $styleManager,
+            $styleMerger,
+            $fileSystemHelper,
+            $this->entityFactory,
+            $this,
+            $disk
+        );
+    }
+
     /**
      * @param OptionsManagerInterface $optionsManager
      * @param StyleManager $styleManager
@@ -76,10 +109,11 @@ class ManagerFactory implements ManagerFactoryInterface
      */
     private function createWorksheetManager(
         OptionsManagerInterface $optionsManager,
-        StyleManager $styleManager,
-        StyleMerger $styleMerger,
-        SharedStringsManager $sharedStringsManager
-    ) {
+        StyleManager            $styleManager,
+        StyleMerger             $styleMerger,
+        SharedStringsManager    $sharedStringsManager
+    )
+    {
         $rowManager = $this->createRowManager();
         $stringsEscaper = $this->helperFactory->createStringsEscaper();
         $stringsHelper = $this->helperFactory->createStringHelper();
@@ -92,6 +126,30 @@ class ManagerFactory implements ManagerFactoryInterface
             $sharedStringsManager,
             $stringsEscaper,
             $stringsHelper
+        );
+    }
+
+    private function createCloudWorksheetManager(
+        OptionsManagerInterface   $optionsManager,
+        StyleManager              $styleManager,
+        StyleMerger               $styleMerger,
+        SharedStringsCloudManager $sharedStringsManager,
+                                  $disk
+    )
+    {
+        $rowManager = $this->createRowManager();
+        $stringsEscaper = $this->helperFactory->createStringsEscaper();
+        $stringsHelper = $this->helperFactory->createStringHelper();
+
+        return new WorksheetCloudManager(
+            $optionsManager,
+            $rowManager,
+            $styleManager,
+            $styleMerger,
+            $sharedStringsManager,
+            $stringsEscaper,
+            $stringsHelper,
+            $disk
         );
     }
 
@@ -152,5 +210,12 @@ class ManagerFactory implements ManagerFactoryInterface
         $stringEscaper = $this->helperFactory->createStringsEscaper();
 
         return new SharedStringsManager($xlFolder, $stringEscaper);
+    }
+
+    private function createCloudSharedStringsManager($xlFolder, $disk)
+    {
+        $stringEscaper = $this->helperFactory->createStringsEscaper();
+
+        return new SharedStringsCloudManager($xlFolder, $stringEscaper, $disk);
     }
 }

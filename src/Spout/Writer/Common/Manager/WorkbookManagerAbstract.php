@@ -16,6 +16,7 @@ use Box\Spout\Writer\Common\Manager\Style\StyleManagerInterface;
 use Box\Spout\Writer\Common\Manager\Style\StyleMerger;
 use Box\Spout\Writer\Exception\SheetNotFoundException;
 use Box\Spout\Writer\Exception\WriterException;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class WorkbookManagerAbstract
@@ -50,6 +51,8 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
     /** @var Worksheet The worksheet where data will be written to */
     protected $currentWorksheet;
 
+    protected $disk;
+
     /**
      * @param Workbook $workbook
      * @param OptionsManagerInterface $optionsManager
@@ -68,7 +71,8 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
         StyleMerger                             $styleMerger,
         FileSystemWithRootFolderHelperInterface $fileSystemHelper,
         InternalEntityFactory                   $entityFactory,
-        ManagerFactoryInterface                 $managerFactory
+        ManagerFactoryInterface                 $managerFactory,
+                                                $disk = ''
     )
     {
         $this->workbook = $workbook;
@@ -79,6 +83,7 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
         $this->fileSystemHelper = $fileSystemHelper;
         $this->entityFactory = $entityFactory;
         $this->managerFactory = $managerFactory;
+        $this->disk = $disk;
     }
 
     /**
@@ -126,13 +131,14 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
         $worksheets = $this->getWorksheets();
 
         $newSheetIndex = \count($worksheets);
+
         $sheetManager = $this->managerFactory->createSheetManager();
         $sheet = $this->entityFactory->createSheet($newSheetIndex, $this->workbook->getInternalId(), $sheetManager);
 
         $worksheetFilePath = $this->getWorksheetFilePath($sheet);
         $worksheet = $this->entityFactory->createWorksheet($worksheetFilePath, $sheet);
 
-        $this->worksheetManager->startSheet($worksheet);
+        $this->worksheetManager->startSheetCloud($worksheet, $this->disk);
 
         $worksheets[] = $worksheet;
         $this->workbook->setWorksheets($worksheets);
@@ -318,12 +324,18 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
      * @param resource $finalFilePointer Pointer to the spreadsheet that will be created
      * @return void
      */
-    public function close($finalFilePointer)
+    public function close($finalFilePointer, $zippedFile = '')
     {
         $this->closeAllWorksheets();
+
         $this->closeRemainingObjects();
-        $this->writeAllFilesToDiskAndZipThem($finalFilePointer);
-        $this->cleanupTempFolder();
+        if (!empty($this->disk)) {
+            $this->writeAllFilesToCloudAndZipThem($finalFilePointer, $zippedFile);
+            $this->cleanupCloudTempFolder();
+        } else {
+            $this->writeAllFilesToDiskAndZipThem($finalFilePointer);
+            $this->cleanupTempFolder();
+        }
     }
 
     /**
@@ -367,5 +379,12 @@ abstract class WorkbookManagerAbstract implements WorkbookManagerInterface
     {
         $rootFolder = $this->fileSystemHelper->getRootFolder();
         $this->fileSystemHelper->deleteFolderRecursively($rootFolder);
+    }
+
+    protected function cleanupCloudTempFolder()
+    {
+        $rootFolder = $this->fileSystemHelper->getRootFolder();
+        Storage::disk($this->disk)->delete($rootFolder);
+//        $this->fileSystemHelper->deleteFolderRecursively($rootFolder);
     }
 }

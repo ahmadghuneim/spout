@@ -2,10 +2,12 @@
 
 namespace Box\Spout\Writer\XLSX\Helper;
 
+use Box\Spout\S3Zipper;
 use Box\Spout\Writer\Common\Entity\Worksheet;
 use Box\Spout\Writer\Common\Helper\FileSystemWithRootFolderHelperInterface;
 use Box\Spout\Writer\Common\Helper\ZipHelper;
 use Box\Spout\Writer\XLSX\Manager\Style\StyleManager;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class FileSystemHelper
@@ -92,8 +94,8 @@ class FileSystemHelper extends \Box\Spout\Common\Helper\FileSystemHelper impleme
     /**
      * Creates all the folders needed to create a XLSX file, as well as the files that won't change.
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create at least one of the base folders
      * @return void
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create at least one of the base folders
      */
     public function createBaseFilesAndFolders()
     {
@@ -105,10 +107,25 @@ class FileSystemHelper extends \Box\Spout\Common\Helper\FileSystemHelper impleme
     }
 
     /**
+     * Creates all the folders needed to create a XLSX file, as well as the files that won't change.
+     *
+     * @return void
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create at least one of the base folders
+     */
+    public function createCloudBaseFilesAndFolders($disk)
+    {
+        $this
+            ->createCloudRootFolder($disk)
+            ->createCloudRelsFolderAndFile($disk)
+            ->createCloudDocPropsFolderAndFiles($disk)
+            ->createCloudXlFolderAndSubFolders($disk);
+    }
+
+    /**
      * Creates the folder that will be used as root
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder
      */
     private function createRootFolder()
     {
@@ -117,11 +134,21 @@ class FileSystemHelper extends \Box\Spout\Common\Helper\FileSystemHelper impleme
         return $this;
     }
 
+    private function createCloudRootFolder($disk)
+    {
+
+        $this->rootFolder = $this->createCloudFolder($this->baseFolderRealPath,
+            \uniqid('xlsx', true),
+            $disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "_rels" folder under the root folder as well as the ".rels" file in it
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder or the ".rels" file
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder or the ".rels" file
      */
     private function createRelsFolderAndFile()
     {
@@ -132,11 +159,21 @@ class FileSystemHelper extends \Box\Spout\Common\Helper\FileSystemHelper impleme
         return $this;
     }
 
+    private function createCloudRelsFolderAndFile($disk)
+    {
+
+        $this->relsFolder = $this->createCloudFolder($this->rootFolder, self::RELS_FOLDER_NAME, $disk);
+
+        $this->createCloudRelsFile($disk);
+
+        return $this;
+    }
+
     /**
      * Creates the ".rels" file under the "_rels" folder (under root)
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the file
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the file
      */
     private function createRelsFile()
     {
@@ -154,11 +191,27 @@ EOD;
         return $this;
     }
 
+    private function createCloudRelsFile($disk)
+    {
+        $relsFileContents = <<<'EOD'
+<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rIdWorkbook" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+    <Relationship Id="rIdCore" Type="http://schemas.openxmlformats.org/officedocument/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+    <Relationship Id="rIdApp" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>
+EOD;
+
+        $this->createCloudFileWithContents($this->relsFolder, self::RELS_FILE_NAME, $relsFileContents, $disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "docProps" folder under the root folder as well as the "app.xml" and "core.xml" files in it
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder or one of the files
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder or one of the files
      */
     private function createDocPropsFolderAndFiles()
     {
@@ -170,11 +223,21 @@ EOD;
         return $this;
     }
 
+    private function createCloudDocPropsFolderAndFiles($disk)
+    {
+        $this->docPropsFolder = $this->createCloudFolder($this->rootFolder, self::DOC_PROPS_FOLDER_NAME, $disk);
+
+        $this->createCloudAppXmlFile($disk);
+        $this->createCloudCoreXmlFile($disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "app.xml" file under the "docProps" folder
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the file
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the file
      */
     private function createAppXmlFile()
     {
@@ -192,11 +255,27 @@ EOD;
         return $this;
     }
 
+    private function createCloudAppXmlFile($disk)
+    {
+        $appName = self::APP_NAME;
+        $appXmlFileContents = <<<EOD
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
+    <Application>$appName</Application>
+    <TotalTime>0</TotalTime>
+</Properties>
+EOD;
+
+        $this->createCloudFileWithContents($this->docPropsFolder, self::APP_XML_FILE_NAME, $appXmlFileContents, $disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "core.xml" file under the "docProps" folder
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the file
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the file
      */
     private function createCoreXmlFile()
     {
@@ -215,11 +294,28 @@ EOD;
         return $this;
     }
 
+    private function createCloudCoreXmlFile($disk)
+    {
+        $createdDate = (new \DateTime())->format(\DateTime::W3C);
+        $coreXmlFileContents = <<<EOD
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <dcterms:created xsi:type="dcterms:W3CDTF">$createdDate</dcterms:created>
+    <dcterms:modified xsi:type="dcterms:W3CDTF">$createdDate</dcterms:modified>
+    <cp:revision>0</cp:revision>
+</cp:coreProperties>
+EOD;
+
+        $this->createCloudFileWithContents($this->docPropsFolder, self::CORE_XML_FILE_NAME, $coreXmlFileContents, $disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "xl" folder under the root folder as well as its subfolders
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create at least one of the folders
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create at least one of the folders
      */
     private function createXlFolderAndSubFolders()
     {
@@ -230,11 +326,21 @@ EOD;
         return $this;
     }
 
+    private function createCloudXlFolderAndSubFolders($disk)
+    {
+        $this->xlFolder = $this->createCloudFolder($this->rootFolder, self::XL_FOLDER_NAME, $disk);
+        $this->createCloudXlRelsFolder($disk);
+
+        $this->createCloudXlWorksheetsFolder($disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "_rels" folder under the "xl" folder
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder
      */
     private function createXlRelsFolder()
     {
@@ -243,15 +349,29 @@ EOD;
         return $this;
     }
 
+    private function createCloudXlRelsFolder($disk)
+    {
+        $this->xlRelsFolder = $this->createCloudFolder($this->xlFolder, self::RELS_FOLDER_NAME, $disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "worksheets" folder under the "xl" folder
      *
-     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder
      * @return FileSystemHelper
+     * @throws \Box\Spout\Common\Exception\IOException If unable to create the folder
      */
     private function createXlWorksheetsFolder()
     {
         $this->xlWorksheetsFolder = $this->createFolder($this->xlFolder, self::WORKSHEETS_FOLDER_NAME);
+
+        return $this;
+    }
+
+    private function createCloudXlWorksheetsFolder($disk)
+    {
+        $this->xlWorksheetsFolder = $this->createCloudFolder($this->xlFolder, self::WORKSHEETS_FOLDER_NAME, $disk);
 
         return $this;
     }
@@ -290,6 +410,36 @@ EOD;
         return $this;
     }
 
+    public function createCloudContentTypesFile($worksheets, $disk)
+    {
+        $contentTypesXmlFileContents = <<<'EOD'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Default ContentType="application/xml" Extension="xml"/>
+    <Default ContentType="application/vnd.openxmlformats-package.relationships+xml" Extension="rels"/>
+    <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml" PartName="/xl/workbook.xml"/>
+EOD;
+
+        /** @var Worksheet $worksheet */
+        foreach ($worksheets as $worksheet) {
+            $contentTypesXmlFileContents .= '<Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" PartName="/xl/worksheets/sheet' . $worksheet->getId() . '.xml"/>';
+        }
+
+        $contentTypesXmlFileContents .= <<<'EOD'
+    <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml" PartName="/xl/styles.xml"/>
+    <Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml" PartName="/xl/sharedStrings.xml"/>
+    <Override ContentType="application/vnd.openxmlformats-package.core-properties+xml" PartName="/docProps/core.xml"/>
+    <Override ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml" PartName="/docProps/app.xml"/>
+</Types>
+EOD;
+
+
+        $this->createCloudFileWithContents($this->rootFolder, self::CONTENT_TYPES_XML_FILE_NAME, $contentTypesXmlFileContents,
+            $disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "workbook.xml" file under the "xl" folder
      *
@@ -322,6 +472,32 @@ EOD;
         return $this;
     }
 
+    public function createCloudWorkbookFile($worksheets, $disk)
+    {
+        $workbookXmlFileContents = <<<'EOD'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+    <sheets>
+EOD;
+
+        /** @var Worksheet $worksheet */
+        foreach ($worksheets as $worksheet) {
+            $worksheetName = $worksheet->getExternalSheet()->getName();
+            $worksheetVisibility = $worksheet->getExternalSheet()->isVisible() ? 'visible' : 'hidden';
+            $worksheetId = $worksheet->getId();
+            $workbookXmlFileContents .= '<sheet name="' . $this->escaper->escape($worksheetName) . '" sheetId="' . $worksheetId . '" r:id="rIdSheet' . $worksheetId . '" state="' . $worksheetVisibility . '"/>';
+        }
+
+        $workbookXmlFileContents .= <<<'EOD'
+    </sheets>
+</workbook>
+EOD;
+
+        $this->createCloudFileWithContents($this->xlFolder, self::WORKBOOK_XML_FILE_NAME, $workbookXmlFileContents, $disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "workbook.xml.res" file under the "xl/_res" folder
      *
@@ -350,6 +526,28 @@ EOD;
         return $this;
     }
 
+    public function createCloudWorkbookRelsFile($worksheets, $disk)
+    {
+        $workbookRelsXmlFileContents = <<<'EOD'
+<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rIdStyles" Target="styles.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"/>
+    <Relationship Id="rIdSharedStrings" Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"/>
+EOD;
+
+        /** @var Worksheet $worksheet */
+        foreach ($worksheets as $worksheet) {
+            $worksheetId = $worksheet->getId();
+            $workbookRelsXmlFileContents .= '<Relationship Id="rIdSheet' . $worksheetId . '" Target="worksheets/sheet' . $worksheetId . '.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/>';
+        }
+
+        $workbookRelsXmlFileContents .= '</Relationships>';
+
+        $this->createCloudFileWithContents($this->xlRelsFolder, self::WORKBOOK_RELS_XML_FILE_NAME, $workbookRelsXmlFileContents, $disk);
+
+        return $this;
+    }
+
     /**
      * Creates the "styles.xml" file under the "xl" folder
      *
@@ -360,6 +558,15 @@ EOD;
     {
         $stylesXmlFileContents = $styleManager->getStylesXMLFileContent();
         $this->createFileWithContents($this->xlFolder, self::STYLES_XML_FILE_NAME, $stylesXmlFileContents);
+
+        return $this;
+    }
+
+    public function createCloudStylesFile($styleManager, $disk)
+    {
+        $stylesXmlFileContents = $styleManager->getStylesXMLFileContent();
+
+        $this->createCloudFileWithContents($this->xlFolder, self::STYLES_XML_FILE_NAME, $stylesXmlFileContents, $disk);
 
         return $this;
     }
@@ -388,5 +595,16 @@ EOD;
 
         // once the zip is copied, remove it
         $this->deleteFile($zipFilePath);
+    }
+
+
+    public function zipCloudFolderAndCopyToStream($finalFilePointer, $disk, $zippedFile)
+    {
+
+        $valid = (new S3Zipper($this->rootFolder, $zippedFile))->start();
+        if ($valid) {
+            Storage::disk($disk)->move($zippedFile . '/' . $zippedFile . '_0.zip', $finalFilePointer);
+            echo Storage::disk($disk)->url($finalFilePointer) . PHP_EOL;
+        }
     }
 }

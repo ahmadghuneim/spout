@@ -2,7 +2,12 @@
 
 namespace Box\Spout\Writer\Common\Helper;
 
+use Aws\Exception\MultipartUploadException;
+use Aws\S3\MultipartUploader;
+use Aws\S3\S3Client;
 use Box\Spout\Writer\Common\Creator\InternalEntityFactory;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class ZipHelper
@@ -77,6 +82,19 @@ class ZipHelper
         );
     }
 
+    public function addFileToCloudArchive($zip, $rootFolderPath, $localFilePath, $disk, $existingFileMode = self::EXISTING_FILES_OVERWRITE)
+    {
+
+        $this->addFileToCloudArchiveWithCompressionMethod(
+            $zip,
+            $rootFolderPath,
+            $localFilePath,
+            $existingFileMode,
+            \ZipArchive::CM_DEFAULT,
+            $disk
+        );
+    }
+
     /**
      * Adds the given file, located under the given root folder to the archive.
      * The file will NOT be compressed.
@@ -129,6 +147,20 @@ class ZipHelper
         }
     }
 
+    protected function addFileToCloudArchiveWithCompressionMethod($zip, $rootFolderPath, $localFilePath, $existingFileMode,
+                                                                  $compressionMethod, $disk)
+    {
+        /*if (!$this->shouldSkipFile($zip, $localFilePath, $existingFileMode)) {
+
+
+            $zip->addFromString($localFilePath, Storage::disk($disk)->get($rootFolderPath . '/' . $localFilePath));
+
+            if (self::canChooseCompressionMethod()) {
+                $zip->setCompressionName($localFilePath, $compressionMethod);
+            }
+        }*/
+    }
+
     /**
      * @return bool Whether it is possible to choose the desired compression method to be used
      */
@@ -146,7 +178,9 @@ class ZipHelper
      */
     public function addFolderToArchive($zip, $folderPath, $existingFileMode = self::EXISTING_FILES_OVERWRITE)
     {
+
         $folderRealPath = $this->getNormalizedRealPath($folderPath) . '/';
+
         $itemIterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($folderPath, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
 
         foreach ($itemIterator as $itemInfo) {
@@ -155,7 +189,23 @@ class ZipHelper
 
             if ($itemInfo->isFile() && !$this->shouldSkipFile($zip, $itemLocalPath, $existingFileMode)) {
                 $zip->addFile($itemRealPath, $itemLocalPath);
+
             }
+
+        }
+    }
+
+    public function addFolderToCloudArchive($zip, $folderPath, $existingFileMode = self::EXISTING_FILES_OVERWRITE, $disk)
+    {
+        foreach (Storage::disk($disk)->allFiles($folderPath) as $itemInfo) {
+
+            $path = '';
+            $itemInfo = ltrim($itemInfo, '/');
+            $itemRealPath = $itemInfo;
+
+            $itemLocalPath = str_replace(ltrim($folderPath, '/'), '', $itemRealPath);
+
+            $zip->addFromString(ltrim($itemLocalPath, '/'), Storage::disk($disk)->get($itemRealPath));
         }
     }
 
@@ -201,6 +251,14 @@ class ZipHelper
         $this->copyZipToStream($zipFilePath, $streamPointer);
     }
 
+    public function closeCloudArchiveAndCopyToStream($finalFilePointer, $zip, $disk)
+    {
+        $zipFilePath = $zip->filename;
+        $zip->close();
+
+        $this->copyCloudZipToStream($finalFilePointer, $zipFilePath, $disk);
+    }
+
     /**
      * Streams the contents of the zip file into the given stream
      *
@@ -213,5 +271,33 @@ class ZipHelper
         $zipFilePointer = fopen($zipFilePath, 'r');
         \stream_copy_to_stream($zipFilePointer, $pointer);
         \fclose($zipFilePointer);
+    }
+
+    protected function copyCloudZipToStream($finalFilePointer, $zipFilePath, $disk)
+    {
+        $this->uploadMultiPart($finalFilePointer, $zipFilePath);
+    }
+
+    protected function uploadMultiPart($file, $zipFilePath)
+    {
+        $contents = fopen($zipFilePath, 'r+');
+        $s3 = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION_REPORTS'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID_REPORTS'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY_REPORTS'),
+            ]
+        ]);
+        $uploader = new MultipartUploader($s3, $contents, [
+            'bucket' => env('AWS_BUCKET_REPORTS'),
+            'key' => $file,
+        ]);
+
+        try {
+            $uploader->upload();
+        } catch (MultipartUploadException $e) {
+            Log::alert($e->getMessage());
+        }
     }
 }

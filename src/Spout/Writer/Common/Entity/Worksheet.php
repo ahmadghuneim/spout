@@ -31,6 +31,7 @@ class Worksheet
      */
     public function __construct($worksheetFilePath, Sheet $externalSheet)
     {
+        
         $this->filePath = $worksheetFilePath;
         $this->filePointer = null;
         $this->externalSheet = $externalSheet;

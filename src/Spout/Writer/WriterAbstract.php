@@ -8,6 +8,7 @@ use Box\Spout\Common\Entity\Style\Style;
 use Box\Spout\Common\Exception\InvalidArgumentException;
 use Box\Spout\Common\Exception\IOException;
 use Box\Spout\Common\Exception\SpoutException;
+use Box\Spout\Common\Helper\GlobalCloudHelper;
 use Box\Spout\Common\Helper\GlobalFunctionsHelper;
 use Box\Spout\Common\Manager\OptionsManagerInterface;
 use Box\Spout\Writer\Common\Entity\Options;
@@ -24,6 +25,10 @@ abstract class WriterAbstract implements WriterInterface
     /** @var string Path to the output file */
     protected $outputFilePath;
 
+    protected $cloudFilePath;
+
+    protected $disk;
+
     /** @var resource Pointer to the file/stream we will write to */
     protected $filePointer;
 
@@ -32,6 +37,8 @@ abstract class WriterAbstract implements WriterInterface
 
     /** @var GlobalFunctionsHelper Helper to work with global functions */
     protected $globalFunctionsHelper;
+
+    protected $globalCloudHelper;
 
     /** @var HelperFactory */
     protected $helperFactory;
@@ -49,19 +56,22 @@ abstract class WriterAbstract implements WriterInterface
      */
     public function __construct(
         OptionsManagerInterface $optionsManager,
-        GlobalFunctionsHelper $globalFunctionsHelper,
-        HelperFactory $helperFactory
-    ) {
+        GlobalFunctionsHelper   $globalFunctionsHelper,
+        HelperFactory           $helperFactory,
+        GlobalCloudHelper       $globalCloudHelper
+    )
+    {
         $this->optionsManager = $optionsManager;
         $this->globalFunctionsHelper = $globalFunctionsHelper;
+        $this->globalCloudHelper = $globalCloudHelper;
         $this->helperFactory = $helperFactory;
     }
 
     /**
      * Opens the streamer and makes it ready to accept data.
      *
-     * @throws IOException If the writer cannot be opened
      * @return void
+     * @throws IOException If the writer cannot be opened
      */
     abstract protected function openWriter();
 
@@ -69,9 +79,9 @@ abstract class WriterAbstract implements WriterInterface
      * Adds a row to the currently opened writer.
      *
      * @param Row $row The row containing cells and styles
-     * @throws WriterNotOpenedException If the workbook is not created yet
-     * @throws IOException If unable to write data
      * @return void
+     * @throws IOException If unable to write data
+     * @throws WriterNotOpenedException If the workbook is not created yet
      */
     abstract protected function addRowToWriter(Row $row);
 
@@ -103,6 +113,21 @@ abstract class WriterAbstract implements WriterInterface
         $this->throwIfFilePointerIsNotAvailable();
 
         $this->openWriter();
+        $this->isWriterOpened = true;
+
+        return $this;
+    }
+
+    public function openToCloudFile($cloudFilePath, $disk)
+    {
+        $this->cloudFilePath = $cloudFilePath;
+        $this->disk = $disk;
+
+        $this->filePointer = $cloudFilePath;
+
+        $this->globalCloudHelper->createFile($this->cloudFilePath, $disk);
+
+        $this->openCloudWriter($disk);
         $this->isWriterOpened = true;
 
         return $this;
@@ -164,8 +189,8 @@ abstract class WriterAbstract implements WriterInterface
      * Checks if the pointer to the file/stream to write to is available.
      * Will throw an exception if not available.
      *
-     * @throws IOException If the pointer is not available
      * @return void
+     * @throws IOException If the pointer is not available
      */
     protected function throwIfFilePointerIsNotAvailable()
     {
@@ -179,8 +204,8 @@ abstract class WriterAbstract implements WriterInterface
      * Throws an exception if already opened.
      *
      * @param string $message Error message
-     * @throws WriterAlreadyOpenedException If the writer was already opened and must not be.
      * @return void
+     * @throws WriterAlreadyOpenedException If the writer was already opened and must not be.
      */
     protected function throwIfWriterAlreadyOpened($message)
     {
@@ -232,13 +257,14 @@ abstract class WriterAbstract implements WriterInterface
     /**
      * {@inheritdoc}
      */
-    public function close()
+    public function close($zippedFile = '')
     {
         if (!$this->isWriterOpened) {
             return;
         }
 
-        $this->closeWriter();
+
+        $this->closeWriter($zippedFile);
 
         if (\is_resource($this->filePointer)) {
             $this->globalFunctionsHelper->fclose($this->filePointer);

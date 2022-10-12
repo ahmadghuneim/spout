@@ -31,6 +31,8 @@ interface WorksheetManagerInterface
      */
     public function startSheet(Worksheet $worksheet);
 
+    public function startSheetCloud(Worksheet $worksheet, $disk);
+
     /**
      * Closes the worksheet
      *
@@ -40,6 +42,6 @@ interface WorksheetManagerInterface
     public function close(Worksheet $worksheet);
 
     public function addReadFromDir(Worksheet $worksheet, $path);
-    
+
     public function addCustomRow(Worksheet $worksheet, $path);
 }

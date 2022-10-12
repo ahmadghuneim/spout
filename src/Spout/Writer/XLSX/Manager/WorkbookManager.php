@@ -74,4 +74,16 @@ class WorkbookManager extends WorkbookManagerAbstract
             ->createStylesFile($this->styleManager)
             ->zipRootFolderAndCopyToStream($finalFilePointer);
     }
+
+    protected function writeAllFilesToCloudAndZipThem($finalFilePointer, $zippedFile)
+    {
+        $worksheets = $this->getWorksheets();
+
+        $this->fileSystemHelper
+            ->createCloudContentTypesFile($worksheets, $this->disk)
+            ->createCloudWorkbookFile($worksheets, $this->disk)
+            ->createCloudWorkbookRelsFile($worksheets, $this->disk)
+            ->createCloudStylesFile($this->styleManager, $this->disk)
+            ->zipCloudFolderAndCopyToStream($finalFilePointer, $this->disk, $zippedFile);
+    }
 }

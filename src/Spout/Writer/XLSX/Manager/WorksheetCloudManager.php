@@ -2,6 +2,9 @@
 
 namespace Box\Spout\Writer\XLSX\Manager;
 
+use Aws\Exception\MultipartUploadException;
+use Aws\S3\MultipartUploader;
+use Aws\S3\S3Client;
 use Box\Spout\Common\Entity\Cell;
 use Box\Spout\Common\Entity\Row;
 use Box\Spout\Common\Entity\Style\Style;
@@ -20,12 +23,13 @@ use Box\Spout\Writer\Common\Manager\WorksheetManagerInterface;
 use Box\Spout\Writer\XLSX\Manager\Style\StyleManager;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class WorksheetManager
  * XLSX worksheet manager, providing the interfaces to work with XLSX worksheets.
  */
-class WorksheetManager implements WorksheetManagerInterface
+class WorksheetCloudManager implements WorksheetManagerInterface
 {
     /**
      * Maximum number of characters a cell can contain
@@ -63,6 +67,8 @@ EOD;
     /** @var StringHelper String helper */
     private $stringHelper;
 
+    private $disk;
+
     /**
      * WorksheetManager constructor.
      *
@@ -75,15 +81,17 @@ EOD;
      * @param StringHelper $stringHelper
      */
     public function __construct(
-        OptionsManagerInterface $optionsManager,
-        RowManager              $rowManager,
-        StyleManager            $styleManager,
-        StyleMerger             $styleMerger,
-        SharedStringsManager    $sharedStringsManager,
-        XLSXEscaper             $stringsEscaper,
-        StringHelper            $stringHelper
+        OptionsManagerInterface   $optionsManager,
+        RowManager                $rowManager,
+        StyleManager              $styleManager,
+        StyleMerger               $styleMerger,
+        SharedStringsCloudManager $sharedStringsManager,
+        XLSXEscaper               $stringsEscaper,
+        StringHelper              $stringHelper,
+                                  $disk
     )
     {
+
         $this->shouldUseInlineStrings = $optionsManager->getOption(Options::SHOULD_USE_INLINE_STRINGS);
         $this->rowManager = $rowManager;
         $this->styleManager = $styleManager;
@@ -91,6 +99,7 @@ EOD;
         $this->sharedStringsManager = $sharedStringsManager;
         $this->stringsEscaper = $stringsEscaper;
         $this->stringHelper = $stringHelper;
+        $this->disk = $disk;
     }
 
     /**
@@ -106,6 +115,7 @@ EOD;
      */
     public function startSheet(Worksheet $worksheet)
     {
+
         $sheetFilePointer = fopen($worksheet->getFilePath(), 'w');
         $this->throwIfSheetFilePointerIsNotAvailable($sheetFilePointer);
 
@@ -115,6 +125,16 @@ EOD;
         fwrite($sheetFilePointer, '<sheetData>');
 
 
+    }
+
+    public function startSheetCloud(Worksheet $worksheet, $disk)
+    {
+        $this->disk = $disk;
+//        $sheetFilePointer = Storage::disk($disk)->put($worksheet->getFilePath(), '');
+
+//        $worksheet->setFilePointer($sheetFilePointer);
+        Storage::disk($disk)->append($worksheet->getFilePath(), self::SHEET_XML_FILE_HEADER);
+        Storage::disk($disk)->append($worksheet->getFilePath(), '<sheetData>');
     }
 
     /**
@@ -175,7 +195,7 @@ EOD;
 
         $rowXML .= '</row>';
 
-        $wasWriteSuccessful = fwrite($worksheet->getFilePointer(), $rowXML);
+        $wasWriteSuccessful = Storage::disk($this->disk)->append($worksheet->getFilePath(), $rowXML);
         if ($wasWriteSuccessful === false) {
             throw new IOException("Unable to write data in {$worksheet->getFilePath()}");
         }
@@ -289,23 +309,24 @@ EOD;
     public function addReadFromDir(Worksheet $worksheet, $path)
     {
         $this->readFromDir = $path;
-        $this->close($worksheet);
+        $this->closeWorkSheetCloud($worksheet);
     }
-   /* public function addReadFromDir(Worksheet $worksheet, $path)
-    {
-        echo $worksheet->getFilePath();
-        $worksheetFilePointer = $worksheet->getFilePointer();
 
-        if (!\is_resource($worksheetFilePointer)) {
-            return;
-        }
+    /* public function addReadFromDir(Worksheet $worksheet, $path)
+     {
+         echo $worksheet->getFilePath();
+         $worksheetFilePointer = $worksheet->getFilePointer();
 
-        $file = fopen($path, 'r');
-        while (!feof($file)) {
-            fwrite($worksheetFilePointer, fgets($file));
-        }
-        File::delete($path);
-    }*/
+         if (!\is_resource($worksheetFilePointer)) {
+             return;
+         }
+
+         $file = fopen($path, 'r');
+         while (!feof($file)) {
+             fwrite($worksheetFilePointer, fgets($file));
+         }
+         File::delete($path);
+     }*/
 
     public function addCustomRow(Worksheet $worksheet, $row)
     {
@@ -313,21 +334,31 @@ EOD;
         fwrite($worksheetFilePointer, $row);
     }
 
+    public function closeWorkSheetCloud(Worksheet $worksheet)
+    {
+        $worksheetFilePointer = $worksheet->getFilePointer();
+
+        $workSheetPath = pathinfo($worksheet->getFilePath())['dirname'];
+
+
+        Storage::disk($this->disk)->delete($worksheet->getFilePath());
+
+        echo $this->readFromDir->getBasename() . PHP_EOL;
+        echo $worksheet->getFilePath() . PHP_EOL;
+        Storage::disk($this->disk)->put($workSheetPath . '/' . $this->readFromDir->getBasename(),
+            file_get_contents($this->readFromDir->getRealPath()));
+    }
+
     /**
      * {@inheritdoc}
      */
     public function close(Worksheet $worksheet)
     {
+
+        return;
         $worksheetFilePointer = $worksheet->getFilePointer();
 
         $workSheetPath = pathinfo($worksheet->getFilePath())['dirname'];
-        Log::alert('worksheet path');
-        Log::alert($worksheet->getFilePath());
-
-
-        if (!\is_resource($worksheetFilePointer)) {
-            return;
-        }
 
         /* if (!empty($this->readFromDir) && is_dir($this->readFromDir)) {
              foreach (File::allFiles($this->readFromDir) as $index => $item) {
@@ -339,19 +370,40 @@ EOD;
              }
          }*/
 //        File::deleteDirectory($this->readFromDir);
-
-        fwrite($worksheetFilePointer, '</sheetData>');
-        fwrite($worksheetFilePointer, '</worksheet>');
-        fclose($worksheetFilePointer);
-
+        Storage::disk($this->disk)->append($worksheet->getFilePath(), '</sheetData>');
+        Storage::disk($this->disk)->append($worksheet->getFilePath(), '</worksheet>');
 
         if (!empty($this->readFromDir)) {
-            File::delete($worksheet->getFilePath());
+            Storage::disk($this->disk)->delete($worksheet->getFilePath());
 
-            File::copy(
-                $this->readFromDir->getRealPath()
-                , $workSheetPath . '/' . $this->readFromDir->getBasename());
+            echo $this->readFromDir->getBasename() . PHP_EOL;
+            echo $worksheet->getFilePath() . PHP_EOL;
+            Storage::disk($this->disk)->put($workSheetPath . '/' . $this->readFromDir->getBasename(),
+                file_get_contents($this->readFromDir->getRealPath()));
 
+        }
+    }
+
+    protected function uploadMultiPart($file, $zipFilePath)
+    {
+        $contents = fopen($zipFilePath, 'r+');
+        $s3 = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION_REPORTS'),
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID_REPORTS'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY_REPORTS'),
+            ]
+        ]);
+        $uploader = new MultipartUploader($s3, $contents, [
+            'bucket' => env('AWS_BUCKET_REPORTS'),
+            'key' => $file,
+        ]);
+
+        try {
+            $uploader->upload();
+        } catch (MultipartUploadException $e) {
+            Log::alert($e->getMessage());
         }
     }
 }
