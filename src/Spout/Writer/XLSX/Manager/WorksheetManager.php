@@ -92,6 +92,9 @@ EOD;
         $this->stringsEscaper = $stringsEscaper;
         $this->stringHelper = $stringHelper;
     }
+    public function startSheetCloud(Worksheet $worksheet, $disk){
+        
+    }
 
     /**
      * @return SharedStringsManager
