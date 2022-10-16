@@ -69,10 +69,11 @@ class WriterFactory
     {
         $optionsManager = new CSVOptionsManager();
         $globalFunctionsHelper = new GlobalFunctionsHelper();
+        $globalCloudHelper = new GlobalCloudHelper();
 
         $helperFactory = new HelperFactory();
 
-        return new CSVWriter($optionsManager, $globalFunctionsHelper, $helperFactory);
+        return new CSVWriter($optionsManager, $globalFunctionsHelper, $helperFactory,$globalCloudHelper);
     }
 
     /**
