@@ -93,7 +93,7 @@ EOD;
         $this->stringHelper = $stringHelper;
     }
     public function startSheetCloud(Worksheet $worksheet, $disk){
-        
+
     }
 
     /**
@@ -178,6 +178,7 @@ EOD;
 
         $rowXML .= '</row>';
 
+        echo $worksheet->getFilePointer().PHP_EOL;
         $wasWriteSuccessful = fwrite($worksheet->getFilePointer(), $rowXML);
         if ($wasWriteSuccessful === false) {
             throw new IOException("Unable to write data in {$worksheet->getFilePath()}");
